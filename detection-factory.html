@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tejas Paranjape — Detection Factory</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="style.css" rel="stylesheet">
+<style>
+  .fig { margin: 1.4rem 0 .5rem; }
+  .fig img { width: 100%; max-width: 640px; height: auto; display: block; margin: 0 auto; }
+  .caption { font-family: var(--mono); font-size: .78rem; color: var(--ink-dim); margin-bottom: 1.8rem; }
+  .stations { list-style: none; padding-left: 0; margin: 1rem 0 1.6rem; }
+  .stations li { border: 1px solid var(--line); background: var(--bg-card); border-radius: 6px; padding: .7rem .9rem; margin-bottom: .55rem; }
+  .stations .id { font-family: var(--mono); color: var(--accent); font-size: .82rem; }
+  .stations .name { font-weight: 600; margin-left: .4rem; }
+  .stations .what { color: var(--ink-dim); font-size: .9rem; display: block; margin-top: .2rem; }
+  h2 { margin-top: 2.2rem; }
+  code { color: var(--accent); background: var(--bg-card); padding: .05rem .3rem; border-radius: 4px; font-size: .85em; }
+</style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark fixed-top" id="sideNav">
+  <div class="container-fluid flex-lg-column align-items-lg-start p-lg-0">
+    <a class="navbar-brand" href="index.html">tejas@paranjape:~$</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive"
+            aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <div class="brand-sub d-none d-lg-block mt-1">
+        Security, from zero.<br><br>
+        <a href="https://www.linkedin.com/in/tejas-paranjape">LinkedIn</a> ·
+        <a href="mailto:tejasparanjape1@gmail.com">Email</a>
+      </div>
+      <ul class="navbar-nav">
+        <li class="nav-item"><a class="nav-link" href="index.html">About</a></li>
+        <li class="nav-item"><a class="nav-link" href="trajectory.html">Trajectory</a></li>
+        <li class="nav-item"><a class="nav-link" href="education.html">Education</a></li>
+        <li class="nav-item"><a class="nav-link" href="publications.html">Publications</a></li>
+        <li class="nav-item"><a class="nav-link active" aria-current="page" href="detection-factory.html">Detection Factory</a></li>
+        <li class="nav-item"><a class="nav-link" href="blog.html">Blog</a></li>
+      </ul>
+      <div class="brand-sub d-lg-none mt-2 mb-2">
+        <a href="https://www.linkedin.com/in/tejas-paranjape">LinkedIn</a> ·
+        <a href="mailto:tejasparanjape1@gmail.com">Email</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <h1>Detection Factory</h1>
+  <p class="tagline">An assembly line for security detection rules — signal in, proven rule out.</p>
+
+  <p>
+    A language model can write a SIEM detection rule in seconds. That was never the hard part. The hard
+    part is trusting it: will it fire a thousand times a day, or never? Did the model invent a field name?
+    Does it duplicate something already deployed? Six months from now, is it still working?
+  </p>
+  <p>
+    The Detection Factory answers those questions mechanically. A rule moves through a series of
+    stations, and promotion between stations is decided by <b>machine-enforced gates</b>, not by
+    someone eyeballing a diff. Every gate decision is written into the rule file itself as an
+    append-only log, so a rule in production carries its own proof of what it passed.
+  </p>
+
+  <h2>the line</h2>
+  <div class="fig"><img src="img/astra/fig1_pipeline.svg" alt="Pipeline overview: seeders, six stations, two human gates, demotion and recall loops"></div>
+  <p class="caption">fig 1 — what feeds the line, the stage each promotion writes, where a human is consulted, and the loops that send a rule back.</p>
+
+  <ul class="stations">
+    <li><span class="id">000</span><span class="name">Seeder</span>
+      <span class="what">The intake. Watches a set of signal sources and turns each into a <b>one-line detection idea</b>: a title and a blurb, deduped against the backlog and the deployed-rule index, ranked by how much exposure it closes, and queued for the Tuner. Nothing below runs on human typing alone.</span></li>
+    <li><span class="id">001</span><span class="name">Tuner</span>
+      <span class="what">Drafts the rule from a one-line idea, then <b>backtests it against months of real telemetry</b>. Projected alerts per week must land inside a noise budget or the rule doesn't move. Too noisy? It mutes the specific offending values (one IP, one service account) instead of weakening the logic. Zero hits? It relaxes exactly one scoping parameter to prove the mechanism fires, then restores it.</span></li>
+    <li><span class="id">002</span><span class="name">Herald</span>
+      <span class="what">Adversarial review by a model from a <b>different model family</b> than the one that wrote the rule, so author blind spots and reviewer blind spots don't line up. Cosmetic fixes are applied silently; broken mechanisms are demoted back to 001 with a reason; design opinions pause for a human.</span></li>
+    <li><span class="id">003</span><span class="name">Warden</span>
+      <span class="what">Duplicate gate. Compares the candidate against a nightly-synced index of everything already deployed, without touching production at decision time. Novel rules pass; duplicates and partial overlaps go to a human.</span></li>
+    <li><span class="id">004</span><span class="name">Porter</span>
+      <span class="what">Gets explicit human sign-off, then deposits the rule in an isolated outbox. <b>The factory holds no credential that can write to the production repository.</b> A separately operated pull agent picks it up and opens the merge request. If the reviewer rejects it, the rule is recalled through the whole line again and the same merge request is updated in place.</span></li>
+    <li><span class="id">005</span><span class="name">Sentry</span>
+      <span class="what">Post-deployment. Daily checks that the log source still flows and the fields still exist, then replays a freshly sampled, redacted, mutated production event through the rule to prove it still fires. Failures demote the rule back into the factory with the evidence attached.</span></li>
+  </ul>
+
+  <h2>where ideas come from</h2>
+  <p>
+    Generation was never the bottleneck, so the line shouldn't wait on someone to have an idea. The Seeder
+    subscribes to the places new detection needs actually show up:
+  </p>
+  <ul class="clean">
+    <li><b>Manual ideas.</b> A human types a title and a sentence. Still the highest-signal source, just no longer the only one.</li>
+    <li><b>Automated pentests.</b> Every technique a scheduled adversary-emulation run executes without an alert is a gap with a ready-made test case attached.</li>
+    <li><b>CVE disclosures.</b> New advisories filtered against the asset inventory. An exploitable CVE in software you actually run seeds a rule for its exploitation pattern.</li>
+    <li><b>Threat intel.</b> Vendor reports, ISAC feeds, and campaign write-ups parsed for techniques and indicators that no deployed rule covers.</li>
+    <li><b>Coverage gaps.</b> The deployed-rule index mapped onto an attack framework, re-scored nightly. Uncovered techniques with available telemetry become candidates.</li>
+    <li><b>Incident retros.</b> Anything found by a hunt, a triage, or a post-mortem that no rule caught is, by definition, a missing detection.</li>
+    <li><b>New log sources.</b> A log type arriving in the SIEM for the first time seeds a baseline set of rules for it.</li>
+    <li><b>Sentry demotions.</b> Not a new idea but the same intake: a rule that died of schema drift re-enters here with the diff as its work order.</li>
+  </ul>
+
+  <h2>no station talks to another</h2>
+  <p>
+    Stations share nothing except a state table. Each rule row has a <code>stage</code> column that acts as the
+    routing key: a station polls for rows in its inbox stage, claims one, does its work, rewrites the stage, and exits.
+    That's the whole integration layer. Any station can crash at any moment and nothing is lost, N copies
+    of a station can run in parallel, and "send this rule back two steps" is a column rewrite with a reason
+    attached. No queue, no broker, no scheduler.
+  </p>
+
+  <h2>why deployment is shaped like that</h2>
+  <div class="fig"><img src="img/astra/fig6_credentials.svg" alt="Credential boundaries between the factory, the outbox, the pull agent and the production repository"></div>
+  <p class="caption">fig 2 — who holds which credential. Two humans, two keys, two teams, and none of them can land a change alone.</p>
+  <p>
+    An autonomous pipeline that can write to the detection repository <i>and</i> effectively approve its own changes is a
+    supply-chain risk: one leaked token poisons every detection you have. So the factory can only write to an outbox
+    in its own access boundary. The pull agent, run by a different team, has a read-only key scoped to that outbox and
+    nothing else, and it alone holds the repository credential. Branch protection means its role can't merge either.
+  </p>
+
+  <h2>what you get</h2>
+  <ul class="clean">
+    <li>Alert volume is bounded by construction. Nothing over budget reaches production.</li>
+    <li>Rules for attacks that have never happened are still provable, not just hopeful.</li>
+    <li>Idea to validated, tuned, reviewed rule in minutes rather than days.</li>
+    <li>Every production rule carries a machine-verifiable record of the gates it passed.</li>
+    <li>Rules that silently rot get caught by daily replay and recalled for repair.</li>
+  </ul>
+
+  <p class="dim" style="font-size:.85rem; margin-top:2rem;">
+    Station names are callsigns, not products.
+  </p>
+</main>
+
+<footer>
+  <em>Tejas typed every character of this website with his own biological fingers (citation needed).</em>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
